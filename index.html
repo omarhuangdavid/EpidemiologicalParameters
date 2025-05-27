@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parámetros Epidemiológicos en Modelado Matemático</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Gris claro de fondo */
+        }
+        .container {
+            max-width: 1000px; 
+            margin: 2rem auto;
+            padding: 1.5rem;
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .parameter-card, .info-card {
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .info-card h3 { 
+            color: #1a56db; 
+            font-size: 1.5rem; 
+            font-weight: 700;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .parameter-card h4, .info-card h4 { 
+            color: #1f2937; 
+            font-size: 1.15rem; 
+            font-weight: 600;
+            margin-top: 0.5rem; 
+            margin-bottom: 0.75rem;
+        }
+        .parameter-card p, .info-card p, .info-card li {
+            color: #4b5563; 
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin-bottom: 0.5rem;
+        }
+        .info-card ul {
+            list-style-type: disc;
+            margin-left: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .info-card ul ul { 
+             list-style-type: circle;
+             margin-left: 1.25rem;
+             margin-top: 0.25rem;
+        }
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+            color: #374151; 
+        }
+        input[type="range"] {
+            width: 100%;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            margin-bottom: 0.5rem;
+        }
+        .value-display {
+            font-weight: 600;
+            color: #2563eb; 
+            font-size: 1.1rem;
+        }
+        .interpretation, .llm-output {
+            margin-top: 0.75rem;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.9rem;
+        }
+        .interpretation.red { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        .interpretation.green { background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .interpretation.yellow { background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+        .llm-output {
+            background-color: #e0f2fe; /* Light blue background for LLM output */
+            border: 1px solid #7dd3fc; /* Sky blue border */
+            color: #0c4a6e; /* Darker blue text */
+        }
+        .loading-indicator {
+            font-style: italic;
+            color: #6b7280; /* Gray text for loading */
+            margin-top: 0.5rem;
+        }
+        .formula {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #e5e7eb;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            margin-bottom: 0.5rem;
+            display: inline-block;
+            font-size: 0.85rem; 
+            overflow-x: auto; 
+        }
+        .tabs button {
+            padding: 0.6rem 1rem; 
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem; 
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+            font-size: 0.85rem; 
+        }
+        .tabs button.active { background-color: #3b82f6; color: white; }
+        .tabs button:not(.active) { background-color: #e5e7eb; color: #374151; }
+        .tab-content { display: none; padding-top: 1rem; }
+        .tab-content.active { display: block; }
+        .example-text { font-style: italic; color: #52525b; font-size: 0.85rem; }
+        .distinction {
+            background-color: #eef2ff; 
+            border-left: 4px solid #4f46e5; 
+            padding: 0.75rem;
+            margin-top: 0.75rem;
+            border-radius: 0.25rem;
+        }
+        .distinction p {
+            margin-bottom: 0.25rem !important;
+        }
+        .code-block {
+            background-color: #1f2937; 
+            color: #d1d5db; 
+            padding: 1rem;
+            border-radius: 0.375rem;
+            overflow-x: auto; 
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.85rem;
+            margin-top: 0.75rem;
+        }
+        .code-block .comment { color: #6b7280; } 
+        .code-block .keyword { color: #c084fc; } 
+        .code-block .function { color: #60a5fa; } 
+        .code-block .string { color: #facc15; } 
+        .code-block .number { color: #34d399; } 
+
+        .sir-graph-container {
+            width: 100%;
+            max-width: 500px; 
+            margin: 1rem auto;
+            border: 1px solid #d1d5db;
+            padding: 1rem;
+            border-radius: 0.375rem;
+        }
+        .gemini-button {
+            background-color: #6366f1; /* Indigo */
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            margin-top: 0.75rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .gemini-button:hover {
+            background-color: #4f46e5; /* Darker Indigo */
+        }
+        .gemini-button:disabled {
+            background-color: #a5b4fc; /* Lighter Indigo, disabled */
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Parámetros Epidemiológicos en Modelado Matemático</h1>
+            <p class="text-md text-gray-600 mt-2">Una guía completa sobre los parámetros clave y su aplicación.</p>
+        </header>
+
+        <div class="tabs mb-6 flex flex-wrap">
+            <button class="tab-button active" onclick="openTab(event, 'tabFundamentales')">1. Fundamentales</button>
+            <button class="tab-button" onclick="openTab(event, 'tabTransmisionHuesped')">2. Transmisión y Huésped</button>
+            <button class="tab-button" onclick="openTab(event, 'tabDesenlacePobInt')">3. Desenlace, Pob. e Interv.</button>
+            <button class="tab-button" onclick="openTab(event, 'tabVectores')">4. Enf. por Vectores</button>
+            <button class="tab-button" onclick="openTab(event, 'tabModeladoContexto')">5. Modelado y Contexto</button>
+        </div>
+
+        <div id="tabFundamentales" class="tab-content active">
+            <div class="info-card">
+                <h3>1. Parámetros Básicos de Transmisión</h3>
+                <p>Estos son los pilares para entender la dinámica inicial de una epidemia. La sección de R<sub>0</sub> y R<sub>e</sub> es interactiva.</p>
+            </div>
+
+            <div class="parameter-card">
+                <h4>Número Básico de Reproducción (R<sub>0</sub>)</h4>
+                <p>Número promedio de casos secundarios generados por un individuo infectado en una población totalmente susceptible. <br><span class="example-text">Ejemplo: R<sub>0</sub> del sarampión ≈ 12-18; COVID-19 (original) ≈ 2-3.</span></p>
+                <p class="formula">R<sub>0</sub> = β × k × D</p>
+                <div>
+                    <label for="beta">Probabilidad de transmisión por contacto (β): <span id="betaValue" class="value-display">0.1</span></label>
+                    <input type="range" id="beta" min="0.01" max="1" step="0.01" value="0.1" oninput="updateR0()">
+                </div>
+                <div>
+                    <label for="kappa">Tasa de contactos efectivos por unidad de tiempo (k): <span id="kappaValue" class="value-display">10</span> contactos/día</label>
+                    <input type="range" id="kappa" min="1" max="50" step="1" value="10" oninput="updateR0()">
+                </div>
+                <div>
+                    <label for="duration">Duración del periodo infeccioso (D): <span id="durationValue" class="value-display">5</span> días</label>
+                    <input type="range" id="duration" min="1" max="30" step="1" value="5" oninput="updateR0()">
+                </div>
+                <p class="mt-4">Valor calculado de R<sub>0</sub>: <strong id="r0Value" class="value-display text-2xl">5.0</strong></p>
+                <div id="r0Interpretation" class="interpretation"></div>
+                <button id="explainR0Button" class="gemini-button" onclick="getDetailedExplanationR0()">✨ Obtener Explicación Detallada de R<sub>0</sub></button>
+                <div id="r0LlmOutputLoading" class="loading-indicator" style="display: none;">Cargando explicación...</div>
+                <div id="r0LlmOutput" class="llm-output" style="display: none;"></div>
+            </div>
+
+            <div class="parameter-card">
+                <h4>Número Efectivo de Reproducción (R<sub>e</sub> o R<sub>t</sub>)</h4>
+                <p>Versión dinámica de R<sub>0</sub>, ajustada por inmunidad poblacional o intervenciones. Indica la transmisibilidad real en un momento 't'.</p>
+                <p class="formula">R<sub>e</sub> = R<sub>0</sub> × s</p>
+                <div>
+                    <label for="susceptibleFraction">Proporción de la población susceptible (s): <span id="susceptibleFractionValue" class="value-display">1.00</span> (100%)</label>
+                    <input type="range" id="susceptibleFraction" min="0" max="1" step="0.01" value="1" oninput="updateRe()">
+                </div>
+                <p class="mt-4">Valor actual de R<sub>0</sub> (de arriba): <strong id="re_r0Value" class="value-display">5.0</strong></p>
+                <p class="mt-2">Valor calculado de R<sub>e</sub>: <strong id="reValue" class="value-display text-2xl">5.0</strong></p>
+                <div id="reInterpretation" class="interpretation"></div>
+                <button id="explainReButton" class="gemini-button" onclick="getDetailedExplanationRe()">✨ Obtener Explicación Detallada de R<sub>e</sub></button>
+                <div id="reLlmOutputLoading" class="loading-indicator" style="display: none;">Cargando explicación...</div>
+                <div id="reLlmOutput" class="llm-output" style="display: none;"></div>
+            </div>
+            
+            <div class="info-card">
+                <h4>✨ Generador de Resumen de Enfermedad</h4>
+                <p>Introduce el nombre de una enfermedad infecciosa para obtener un resumen de sus parámetros epidemiológicos clave.</p>
+                <label for="diseaseNameInput">Nombre de la enfermedad:</label>
+                <input type="text" id="diseaseNameInput" placeholder="Ej: Sarampión, Influenza, Dengue">
+                <button id="generateSummaryButton" class="gemini-button" onclick="generateDiseaseSummary()">✨ Generar Resumen</button>
+                <div id="diseaseSummaryLoading" class="loading-indicator" style="display: none;">Generando resumen...</div>
+                <div id="diseaseSummaryOutput" class="llm-output" style="display: none;"></div>
+            </div>
+
+            <div class="info-card">
+                <h4>Período de Incubación</h4>
+                <p>Tiempo entre la infección y la aparición de síntomas. <br><span class="example-text">Ejemplo: COVID-19 ≈ 5-6 días (puede variar de 2 a 14 días).</span></p>
+                <p>Es crucial para el rastreo de contactos y la definición de periodos de cuarentena.</p>
+            </div>
+
+            <div class="info-card">
+                <h4>Período de Infectividad</h4>
+                <p>Duración en la que un individuo puede transmitir la enfermedad (puede ser sintomático o asintomático).</p>
+                <p>Este periodo (D) es un componente directo del cálculo de R<sub>0</sub>. Un periodo más largo ofrece más oportunidades de transmisión.</p>
+                <p><span class="example-text">Nota: El valor de 'D' en la sección interactiva de R<sub>0</sub> representa este periodo.</span></p>
+            </div>
+            
+            <div class="info-card">
+                <h4>Visualización de un Modelo SIR Básico</h4>
+                <p>Un modelo SIR simple divide la población en Susceptibles (S), Infectados (I) y Recuperados (R). Las curvas muestran cómo cambian estas poblaciones con el tiempo:</p>
+                <div class="sir-graph-container">
+                    <svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+                        <line x1="20" y1="180" x2="280" y2="180" stroke="#333" stroke-width="1"/> <line x1="20" y1="20" x2="20" y2="180" stroke="#333" stroke-width="1"/> <path d="M 20 30 Q 60 35, 80 100 T 120 170 L 280 175" stroke="#10B981" stroke-width="2" fill="none"/>
+                        <path d="M 20 178 Q 70 40, 110 50 T 200 160 L 280 170" stroke="#EF4444" stroke-width="2" fill="none"/>
+                        <path d="M 20 179 Q 80 170, 150 70 T 280 35" stroke="#3B82F6" stroke-width="2" fill="none"/>
+                        <text x="30" y="45" font-size="10" fill="#10B981">S</text>
+                        <text x="100" y="40" font-size="10" fill="#EF4444">I</text>
+                        <text x="260" y="30" font-size="10" fill="#3B82F6">R</text>
+                        <text x="140" y="195" font-size="8" fill="#333">Tiempo</text>
+                        <text x="5" y="100" font-size="8" fill="#333" transform="rotate(-90 10 100)">Población</text>
+                    </svg>
+                </div>
+                <p>La forma de estas curvas, especialmente el pico de la curva de Infectados (I), depende crucialmente de los parámetros:</p>
+                <ul>
+                    <li>Un <strong>R<sub>0</sub> más alto</strong> generalmente lleva a un pico de infecciones más alto y más temprano, con una disminución más rápida de susceptibles.</li>
+                    <li>La <strong>duración de la infecciosidad (1/γ)</strong> afecta cuánto tiempo permanecen los individuos en el compartimento I. Un periodo infeccioso más largo puede ensanchar la curva epidémica.</li>
+                    <li>La <strong>tasa de contacto (β)</strong> es un componente clave de R<sub>0</sub>; reducirla mediante intervenciones "aplana la curva".</li>
+                </ul>
+                <span class="example-text">Gráficos como el de la página 26 del documento guía ("Zulma cucunuba - Más allá del R0_FINAL.pdf") muestran cómo diferentes valores de R<sub>0</sub> generan curvas epidémicas de distinta magnitud y duración.</span>
+            </div>
+        </div>
+
+        <div id="tabTransmisionHuesped" class="tab-content">
+             <div class="info-card">
+                <h3>2. Parámetros de Transmisión y del Huésped</h3>
+                <p>Factores que modulan cómo se propaga el agente infeccioso y características del individuo o población que influyen en la infección.</p>
+            </div>
+            <div class="info-card">
+                <h4>Parámetros de Transmisión</h4>
+                <ul>
+                    <li><strong>Tasa de Contacto (β o k):</strong> Promedio de contactos efectivos por unidad de tiempo. Depende de factores sociales (comportamiento, densidad poblacional) y biológicos (modo de transmisión del patógeno). <br><span class="example-text">En la sección interactiva, 'k' es la tasa de contactos y 'β' la probabilidad de transmisión por contacto. A menudo, una única 'β' global engloba ambos.</span></li>
+                    <li><strong>Probabilidad de Transmisión por Contacto (p):</strong> Riesgo de infección dado un contacto entre un susceptible y un infectado. Depende de la infecciosidad del agente y la naturaleza del contacto. <br><span class="example-text">Es el parámetro 'β' en la sección interactiva de R<sub>0</sub>.</span></li>
+                    <li><strong>Efecto de Estacionalidad:</strong> Variación de la transmisión según las temporadas. <br><span class="example-text">Ej: Influenza en invierno por mayor tiempo en interiores y supervivencia viral.</span></li>
+                </ul>
+            </div>
+            
+            <div class="info-card">
+                <h4>Parámetros Relacionados con el Huésped</h4>
+                <ul>
+                    <li><strong>Susceptibilidad:</strong> Variabilidad en la probabilidad de infección (edad, genética, estado inmune).</li>
+                    <li><strong>Proporción de Asintomáticos (σ):</strong> Fracción de infectados sin síntomas pero que pueden transmitir (crucial en COVID-19).</li>
+                    <li><strong>Inmunidad Cruzada:</strong> Protección por infección previa o vacunación con patógeno relacionado. <br><span class="example-text">Ej: Serotipos de dengue.</span></li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="tabDesenlacePobInt" class="tab-content">
+            <div class="info-card">
+                <h3>3. Desenlace Clínico, Población e Intervenciones</h3>
+                <p>Impacto de la enfermedad, características poblacionales relevantes y efectos de las medidas de control.</p>
+            </div>
+            <div class="info-card">
+                <h4>Parámetros de Desenlace Clínico</h4>
+                <ul>
+                    <li>
+                        <strong>Tasa de Letalidad (CFR - Case Fatality Rate):</strong>
+                        <p>Proporción de muertes entre los *casos confirmados* de una enfermedad. Es una medida de la gravedad de la enfermedad una vez que se contrae.</p>
+                        <p class="formula">(Nº Muertes por Enfermedad) / (Nº Casos Confirmados) × 100%</p>
+                        <span class="example-text">Ej: Si 100 casos confirmados de Enfermedad X y 5 mueren, CFR = 5%.</span>
+                        <div class="distinction">
+                            <p><strong>Distinción con Tasa de Mortalidad:</strong></p>
+                            <p>La <strong>Tasa de Mortalidad</strong> (Mortality Rate) mide la frecuencia de muertes en una *población total* durante un período específico (ej. muertes por 100,000 habitantes por año). No se limita a los casos confirmados, sino que considera a toda la población en riesgo.</p>
+                            <p class="formula">(Nº Muertes por Enfermedad en período) / (Población Total en riesgo) × Factor (ej. 100,000)</p>
+                            <p>El CFR se enfoca en la letalidad entre los enfermos; la tasa de mortalidad refleja el impacto en la población general.</p>
+                        </div>
+                    </li>
+                    <li><strong>Tasa de Recuperación (γ):</strong> Tasa a la cual los infectados se recuperan y dejan de ser infecciosos. Es el inverso del período infeccioso promedio (γ = 1/D). <br><span class="example-text">Si D = 5 días, γ = 1/5 = 0.2 por día.</span></li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <h4>Parámetros Poblacionales</h4>
+                <ul>
+                    <li><strong>Estructura Demográfica:</strong> Distribución por edad, densidad, movilidad. Importante porque contacto y susceptibilidad varían por edad. <br><span class="example-text">Modelos usan matrices de contacto por edad.</span></li>
+                    <li><strong>Cobertura de Vacunación:</strong> Proporción de población inmunizada, crítica para inmunidad colectiva.</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <h4>Parámetros de Intervenciones</h4>
+                <ul>
+                    <li><strong>Eficacia de Cuarentenas/Aislamiento:</strong> Reducción en tasa de transmisión (β o k) por restricciones. <br><span class="example-text">Ej: Cuarentena reduce 'k' en 50-70%.</span></li>
+                    <li><strong>Tiempo de Implementación de Medidas:</strong> Retraso en aplicar intervenciones impacta la curva epidémica.</li>
+                    <li><strong>Disponibilidad y Eficacia de Tratamientos:</strong> Efecto en duración de infectividad, severidad o mortalidad.</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div id="tabVectores" class="tab-content">
+            <div class="info-card">
+                <h3>4. Parámetros en Enfermedades Transmitidas por Vectores</h3>
+                <p>Estas enfermedades (ej. dengue, malaria, Zika, Chagas) involucran un artrópodo (mosquito, garrapata, chinche) que transmite el patógeno. El modelado requiere parámetros adicionales para el vector y su interacción.</p>
+            </div>
+            <div class="info-card">
+                <h4>Periodo de Incubación Extrínseco (PIE)</h4>
+                <p>Tiempo desde que un vector se infecta hasta que puede transmitir (patógeno se replica y migra a glándulas salivales). Sensible a la temperatura.</p>
+                <span class="example-text">Ej: Dengue en Aedes aegypti, PIE ≈ 8-12 días a 25-30°C.</span>
+            </div>
+            <div class="info-card">
+                <h4>Capacidad Vectorial (C)</h4>
+                <p>Eficiencia de una población de vectores para transmitir un patógeno. Integra varios parámetros:</p>
+                <p class="formula">C = (m × a² × b × Pⁿ) / -ln(P)</p>
+                <ul>
+                    <li><strong>m:</strong> Densidad de vectores por huésped.</li>
+                    <li><strong>a:</strong> Tasa de picadura del vector sobre el huésped por día.</li>
+                    <li><strong>b:</strong> Probabilidad de transmisión del patógeno del huésped infectado al vector susceptible por picadura (huésped → vector).</li>
+                    <li><strong>P:</strong> Probabilidad de supervivencia diaria del vector.</li>
+                    <li><strong>n:</strong> Duración del PIE en días.</li>
+                </ul>
+                <p>Un alto valor de C indica alta capacidad de transmisión.</p>
+            </div>
+            <div class="info-card">
+                <h4>Parámetros Componentes de la Capacidad Vectorial</h4>
+                <ul>
+                    <li><strong>Tasa de Picadura del Vector (a):</strong> Nº promedio de picaduras de un vector a un tipo de huésped por día. Depende de preferencia y disponibilidad del huésped.</li>
+                    <li><strong>Probabilidades de Transmisión:</strong>
+                        <ul>
+                            <li>Huésped a Vector (b o $b_v$): Probabilidad de que vector susceptible se infecte al picar huésped infeccioso.</li>
+                            <li>Vector a Huésped (c o $b_h$): Probabilidad de que vector infeccioso transmita a huésped susceptible. (Nota: 'c' a veces se usa para esto, y 'b' en la fórmula de C es $b_v$).</li>
+                        </ul>
+                    </li>
+                    <li><strong>Longevidad del Vector:</strong> Esperanza de vida promedio. Relacionada con la supervivencia diaria (P). El vector debe vivir más que el PIE. <br><span class="formula">Esperanza de vida ≈ 1 / -ln(P)</span></li>
+                    <li><strong>Densidad del Vector (m):</strong> Nº de vectores por huésped o por unidad de área. Afecta frecuencia de contacto.</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h4>Sobredispersión en Transmisión Vectorial</h4>
+                <p>Similar a superpropagación, puede haber heterogeneidad significativa:</p>
+                <ul>
+                    <li>Algunos huéspedes son picados mucho más (atractivo, exposición).</li>
+                    <li>Algunos vectores son más eficientes transmitiendo.</li>
+                    <li>Distribución espacial no homogénea de vectores/huéspedes.</li>
+                </ul>
+                <p>Un pequeño % de huéspedes/vectores puede causar gran parte de la transmisión. Se modela con distribuciones como la binomial negativa.</p>
+            </div>
+            <div class="info-card">
+                <h4>Caso de Estudio: Modelando Chikungunya</h4>
+                <p>Chikungunya es una enfermedad viral transmitida principalmente por mosquitos Aedes (A. aegypti y A. albopictus). Un modelo para Chikungunya debe considerar tanto la población humana como la del vector.</p>
+                <p><strong>Estructura del Modelo Típica (acoplado Huésped-Vector):</strong></p>
+                <ul>
+                    <li><strong>Población Humana (H):</strong> S<sub>H</sub> (Susceptibles), E<sub>H</sub> (Expuestos, debido al periodo de incubación intrínseco), I<sub>H</sub> (Infectados), R<sub>H</sub> (Recuperados, usualmente con inmunidad duradera).</li>
+                    <li><strong>Población del Vector (V):</strong> S<sub>V</sub> (Susceptibles), E<sub>V</sub> (Expuestos, durante el PIE), I<sub>V</sub> (Infectados, y permanecen así de por vida).</li>
+                </ul>
+                <span class="example-text">Similar al diagrama $S_H, I_H, R_H$ y $S_V, E_V, I_V$ de la página 48 del documento guía.</span>
+                <p><strong>Parámetros Clave Adicionales o Críticos para Chikungunya:</strong></p>
+                <ul>
+                    <li><strong>Periodo de Incubación Intrínseco en humanos ($\alpha_H^{-1}$):</strong> Tiempo desde la picadura infectiva hasta el inicio de síntomas/viremia en humanos (ej. 2-7 días).</li>
+                    <li><strong>Periodo de Incubación Extrínseco (PIE, $n$ o $\alpha_V^{-1}$):</strong> Muy sensible a la temperatura ambiente. Es un factor crítico en la estacionalidad y geografía de los brotes.</li>
+                    <li><strong>Tasas de Picadura (a):</strong> Frecuencia con la que los mosquitos Aedes pican a los humanos.</li>
+                    <li><strong>Densidad de Vectores (m):</strong> Número de mosquitos hembra por humano. Varía mucho con condiciones ambientales (lluvia, criaderos).</li>
+                    <li><strong>Probabilidades de transmisión:</strong> $b_h$ (mosquito a humano), $b_v$ (humano a mosquito).</li>
+                    <li><strong>Tasas de mortalidad del vector ($\mu_V$):</strong> Afecta la longevidad y la proporción de mosquitos que sobreviven al PIE.</li>
+                    <li><strong>Tasa de recuperación humana ($\gamma_H$):</strong> Duración de la infecciosidad en humanos.</li>
+                    <li><strong>Estacionalidad:</strong> Incorporar cómo la lluvia y la temperatura afectan la reproducción y supervivencia del vector ($m, P, n$).</li>
+                    <li><strong>Movilidad Humana:</strong> Para la dispersión geográfica del virus a nuevas áreas.</li>
+                </ul>
+                <p>Las intervenciones se enfocarían en reducir la densidad del vector (control de criaderos, fumigación), reducir las picaduras (repelentes, mosquiteros) y, si estuvieran disponibles, vacunas o tratamientos para humanos.</p>
+            </div>
+        </div>
+
+        <div id="tabModeladoContexto" class="tab-content">
+             <div class="info-card">
+                <h3>5. Modelado Avanzado, Aplicaciones y Contexto</h3>
+                <p>Aspectos adicionales del modelado, sus usos y los desafíos inherentes.</p>
+            </div>
+            <div class="info-card">
+                <h4>Parámetros Estocásticos</h4>
+                <p>Consideran aleatoriedad, importante en brotes pequeños o al inicio.</p>
+                <ul>
+                    <li><strong>Eventos de Superpropagación:</strong> Heterogeneidad donde pocos individuos causan muchas infecciones. Modelado con distribuciones de "colas pesadas" (ej. binomial negativa).</li>
+                    <li><strong>Probabilidad de Extinción:</strong> Riesgo de que un brote inicial no progrese por azar, incluso si R<sub>0</sub> > 1.</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <h4>Integración en Modelos</h4>
+                <ul>
+                    <li><strong>Modelos Compartimentales (SIR, SEIR, SEIRS):</strong> Usan R<sub>0</sub>, γ, 1/α (incubación), etc. La visualización en la Pestaña 1 es un ejemplo.</li>
+                    <li><strong>Modelos Basados en Agentes (ABM):</strong> Incorporan heterogeneidad individual, comportamiento, movilidad.</li>
+                    <li><strong>Modelos de Redes:</strong> Consideran estructuras de contacto complejas.</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <h4>Aplicaciones Prácticas</h4>
+                <ul>
+                    <li><strong>Predicción de Picos Epidemiológicos:</strong> Usando R<sub>0</sub>/R<sub>e</sub> y tasas de contacto.</li>
+                    <li><strong>Evaluación de Estrategias de Intervención:</strong> Simular impacto de vacunación, distanciamiento, etc.</li>
+                    <li><strong>Planificación de Recursos Sanitarios:</strong> Estimar demanda de camas UCI, ventiladores.</li>
+                </ul>
+            </div>
+            
+            <div class="info-card">
+                <h4>Ejemplos Prácticos de Código (Conceptual)</h4>
+                <p>A continuación, se muestran ejemplos conceptuales muy simplificados de cómo se podría definir un modelo SIR en R y Python. Estos son solo para ilustración básica.</p>
+                
+                <h5>Modelo SIR en R (usando deSolve)</h5>
+                <pre class="code-block"><code><span class="comment"># Cargar el paquete deSolve</span>
+<span class="keyword">library</span>(deSolve)
+
+<span class="comment"># Definir la función del modelo SIR</span>
+<span class="function">sir_model</span> <span class="keyword">&lt;-</span> <span class="keyword">function</span>(time, state, parameters) {
+  <span class="keyword">with</span>(<span class="keyword">as.list</span>(<span class="keyword">c</span>(state, parameters)), {
+    dS <span class="keyword">&lt;-</span> -beta <span class="keyword">*</span> S <span class="keyword">*</span> I / N
+    dI <span class="keyword">&lt;-</span>  beta <span class="keyword">*</span> S <span class="keyword">*</span> I / N - gamma <span class="keyword">*</span> I
+    dR <span class="keyword">&lt;-</span>  gamma <span class="keyword">*</span> I
+    <span class="keyword">return</span>(<span class="keyword">list</span>(<span class="keyword">c</span>(dS, dI, dR)))
+  })
+}
+
+<span class="comment"># Parámetros</span>
+N <span class="keyword">&lt;-</span> <span class="number">1000</span>  <span class="comment"># Población total</span>
+parameters <span class="keyword">&lt;-</span> <span class="keyword">c</span>(beta <span class="keyword">=</span> <span class="number">0.5</span>, gamma <span class="keyword">=</span> <span class="number">0.1</span>)
+initial_state <span class="keyword">&lt;-</span> <span class="keyword">c</span>(S <span class="keyword">=</span> N <span class="keyword">-</span> <span class="number">1</span>, I <span class="keyword">=</span> <span class="number">1</span>, R <span class="keyword">=</span> <span class="number">0</span>)
+times <span class="keyword">&lt;-</span> <span class="function">seq</span>(<span class="number">0</span>, <span class="number">100</span>, <span class="keyword">by =</span> <span class="number">1</span>)
+
+<span class="comment"># Resolver las ecuaciones diferenciales</span>
+output <span class="keyword">&lt;-</span> <span class="function">ode</span>(y <span class="keyword">=</span> initial_state, times <span class="keyword">=</span> times, func <span class="keyword">=</span> sir_model, parms <span class="keyword">=</span> parameters)
+
+<span class="comment"># plot(output) # Para visualizar</span></code></pre>
+
+                <h5>Modelo SIR en Python (usando SciPy)</h5>
+                <pre class="code-block"><code><span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">from</span> scipy.integrate <span class="keyword">import</span> solve_ivp
+<span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt
+
+<span class="comment"># Definir la función del modelo SIR</span>
+<span class="keyword">def</span> <span class="function">sir_model</span>(t, y, N, beta, gamma):
+    S, I, R <span class="keyword">=</span> y
+    dSdt <span class="keyword">=</span> -beta <span class="keyword">*</span> S <span class="keyword">*</span> I / N
+    dIdt <span class="keyword">=</span> beta <span class="keyword">*</span> S <span class="keyword">*</span> I / N - gamma <span class="keyword">*</span> I
+    dRdt <span class="keyword">=</span> gamma <span class="keyword">*</span> I
+    <span class="keyword">return</span> dSdt, dIdt, dRdt
+
+<span class="comment"># Parámetros</span>
+N <span class="keyword">=</span> <span class="number">1000</span>  <span class="comment"># Población total</span>
+beta <span class="keyword">=</span> <span class="number">0.5</span>  <span class="comment"># Tasa de contacto efectivo</span>
+gamma <span class="keyword">=</span> <span class="number">0.1</span> <span class="comment"># Tasa de recuperación</span>
+
+<span class="comment"># Condiciones iniciales</span>
+S0, I0, R0 <span class="keyword">=</span> N<span class="keyword">-</span><span class="number">1</span>, <span class="number">1</span>, <span class="number">0</span>
+y0 <span class="keyword">=</span> S0, I0, R0
+
+<span class="comment"># Intervalo de tiempo</span>
+t_span <span class="keyword">=</span> [<span class="number">0</span>, <span class="number">100</span>]
+t_eval <span class="keyword">=</span> np.linspace(t_span[<span class="number">0</span>], t_span[<span class="number">1</span>], <span class="number">100</span>)
+
+<span class="comment"># Resolver las ecuaciones</span>
+sol <span class="keyword">=</span> <span class="function">solve_ivp</span>(sir_model, t_span, y0, args<span class="keyword">=</span>(N, beta, gamma), t_eval<span class="keyword">=</span>t_eval)
+
+<span class="comment"># plt.plot(sol.t, sol.y.T) # Para visualizar</span>
+<span class="comment"># plt.legend(['S', 'I', 'R'])</span>
+<span class="comment"># plt.show()</span></code></pre>
+                <p><span class="example-text">Nota: Estos códigos son simplificaciones extremas. El modelado real implica ajuste a datos, validación, análisis de sensibilidad, y a menudo estructuras de modelo mucho más complejas.</span></p>
+            </div>
+
+            <div class="info-card">
+                <h4>Retos en la Estimación de Parámetros</h4>
+                <ul>
+                    <li><strong>Sesgos en los Datos:</strong> Subregistro de casos, retrasos.</li>
+                    <li><strong>Dinámica Temporal y Comportamental:</strong> Parámetros cambian con comportamiento, medidas, evolución del patógeno.</li>
+                    <li><strong>Variantes Virales:</strong> Nuevas variantes pueden tener diferentes R<sub>0</sub>, CFR, escape inmune.</li>
+                </ul>
+            </div>
+            
+            <div class="info-card">
+                <h4>Conclusión</h4>
+                <p>Los parámetros epidemiológicos son la columna vertebral de los modelos matemáticos. Su estimación precisa y comprensión son cruciales para proyecciones útiles y decisiones en salud pública. Requieren conocimiento de biología, dinámica poblacional y contexto social.</p>
+                <p class="mt-4 font-semibold">¡Preguntas o discusión?</p>
+            </div>
+
+            <div class="info-card">
+                <h4>Material Adicional para la Presentación</h4>
+                <ul>
+                    <li><strong>Ejemplos Visuales:</strong> Gráficos de curvas epidémicas (S, I, R) con distintos R<sub>0</sub> o intervenciones (como el ejemplo incluido en la Pestaña 1).</li>
+                    <li><strong>Caso de Estudio:</strong> Analizar brote real (ej. COVID-19 en 2020), cómo se estimaron parámetros y utilidad de modelos. El ejemplo de Chikungunya en la Pestaña 4 sirve como un mini-caso de estudio.</li>
+                    <li><strong>Herramientas de Software:</strong>
+                        <ul>
+                            <li>Lenguajes: R (EpiModel, earlyR), Python (SciPy, PyRoss), MATLAB.</li>
+                            <li>Software: NetLogo (ABM), Stan (inferencia bayesiana).</li>
+                        </ul>
+                         Los ejemplos de código conceptuales ya dan una idea de R y Python.
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let currentR0 = 0;
+        let currentSusceptibleFraction = 1.0;
+        let currentRe = 0;
+
+        // --- Funciones de actualización de UI ---
+        function updateR0() {
+            const beta = parseFloat(document.getElementById('beta').value);
+            const kappa = parseFloat(document.getElementById('kappa').value);
+            const duration = parseFloat(document.getElementById('duration').value);
+
+            document.getElementById('betaValue').textContent = beta.toFixed(2);
+            document.getElementById('kappaValue').textContent = kappa + ' contactos/día';
+            document.getElementById('durationValue').textContent = duration + ' días';
+            
+            currentR0 = beta * kappa * duration;
+            document.getElementById('r0Value').textContent = currentR0.toFixed(1);
+
+            const r0Interpretation = document.getElementById('r0Interpretation');
+            if (currentR0 > 1) {
+                r0Interpretation.textContent = `R0 = ${currentR0.toFixed(1)}: La infección tiende a propagarse. Cada infectado contagia a >1 persona.`;
+                r0Interpretation.className = 'interpretation red';
+            } else if (currentR0 === 1) {
+                r0Interpretation.textContent = `R0 = ${currentR0.toFixed(1)}: La infección sería endémica o estable. Cada infectado contagia a 1 persona.`;
+                r0Interpretation.className = 'interpretation yellow';
+            } else {
+                r0Interpretation.textContent = `R0 = ${currentR0.toFixed(1)}: La infección tiende a desaparecer. Cada infectado contagia a <1 persona.`;
+                r0Interpretation.className = 'interpretation green';
+            }
+            // Clear previous LLM output for R0 if parameters change
+            document.getElementById('r0LlmOutput').style.display = 'none';
+            document.getElementById('r0LlmOutput').innerHTML = '';
+            updateRe(); 
+        }
+
+        function updateRe() {
+            currentSusceptibleFraction = parseFloat(document.getElementById('susceptibleFraction').value);
+            document.getElementById('susceptibleFractionValue').textContent = currentSusceptibleFraction.toFixed(2) + ` (${(currentSusceptibleFraction*100).toFixed(0)}%)`;
+            document.getElementById('re_r0Value').textContent = currentR0.toFixed(1);
+            currentRe = currentR0 * currentSusceptibleFraction;
+            document.getElementById('reValue').textContent = currentRe.toFixed(1);
+
+            const reInterpretation = document.getElementById('reInterpretation');
+            if (currentRe > 1) {
+                reInterpretation.textContent = `Re = ${currentRe.toFixed(1)}: La epidemia sigue creciendo en la población actual.`;
+                reInterpretation.className = 'interpretation red';
+            } else if (currentRe === 1) {
+                reInterpretation.textContent = `Re = ${currentRe.toFixed(1)}: La epidemia se mantiene estable en la población actual.`;
+                reInterpretation.className = 'interpretation yellow';
+            } else {
+                reInterpretation.textContent = `Re = ${currentRe.toFixed(1)}: La epidemia está en declive en la población actual.`;
+                reInterpretation.className = 'interpretation green';
+            }
+            // Clear previous LLM output for Re if parameters change
+            document.getElementById('reLlmOutput').style.display = 'none';
+            document.getElementById('reLlmOutput').innerHTML = '';
+        }
+        
+        function openTab(event, tabName) {
+            let i, tabcontent, tabbuttons;
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+                tabcontent[i].classList.remove("active");
+            }
+            tabbuttons = document.getElementsByClassName("tab-button");
+            for (i = 0; i < tabbuttons.length; i++) {
+                tabbuttons[i].classList.remove("active");
+            }
+            document.getElementById(tabName).style.display = "block";
+            document.getElementById(tabName).classList.add("active");
+            event.currentTarget.classList.add("active");
+        }
+
+        // --- Funciones para API de Gemini ---
+        const API_KEY = ""; // Dejar vacío, Canvas lo proveerá
+        const API_URL_GEMINI = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
+
+        async function callGeminiAPI(prompt, buttonElement, loadingElement, outputElement) {
+            buttonElement.disabled = true;
+            loadingElement.style.display = 'block';
+            outputElement.style.display = 'none';
+            outputElement.innerHTML = '';
+
+            try {
+                const payload = {
+                    contents: [{ role: "user", parts: [{ text: prompt }] }]
+                };
+                const response = await fetch(API_URL_GEMINI, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error("Error en API Gemini:", response.status, errorData);
+                    outputElement.innerHTML = `<p class="text-red-600">Error al contactar la API: ${response.status}. Detalles en consola.</p>`;
+                    outputElement.style.display = 'block';
+                    return;
+                }
+
+                const result = await response.json();
+                
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    // Simple markdown to HTML conversion (bold and newlines)
+                    let htmlText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'); // Bold
+                    htmlText = htmlText.replace(/\n/g, '<br>'); // Newlines
+                    outputElement.innerHTML = htmlText;
+                } else {
+                     console.warn("Respuesta inesperada de la API:", result);
+                    outputElement.innerHTML = "<p>No se pudo obtener una explicación detallada en este momento o la respuesta no tuvo el formato esperado.</p>";
+                }
+            } catch (error) {
+                console.error("Error en la llamada a Gemini API:", error);
+                outputElement.innerHTML = "<p class='text-red-600'>Ocurrió un error al procesar la solicitud. Por favor, inténtalo de nuevo más tarde.</p>";
+            } finally {
+                buttonElement.disabled = false;
+                loadingElement.style.display = 'none';
+                outputElement.style.display = 'block';
+            }
+        }
+
+        async function getDetailedExplanationR0() {
+            const prompt = `Actualmente, el R0 calculado es ${currentR0.toFixed(1)}. Explica en detalle qué implica este valor para la propagación de una enfermedad infecciosa en una población completamente susceptible. Describe el potencial de crecimiento de una epidemia con este R0 y qué tipo de preocupaciones de salud pública podría generar. Mantén la explicación concisa pero informativa, en español. Usa Markdown para dar formato si es necesario (ej. **negrita**).`;
+            callGeminiAPI(prompt, 
+                document.getElementById('explainR0Button'),
+                document.getElementById('r0LlmOutputLoading'),
+                document.getElementById('r0LlmOutput')
+            );
+        }
+
+        async function getDetailedExplanationRe() {
+            const prompt = `Actualmente, el R0 es ${currentR0.toFixed(1)} y la fracción de susceptibles es ${currentSusceptibleFraction.toFixed(2)}, resultando en un Re de ${currentRe.toFixed(1)}. Explica en detalle qué implica este valor de Re para la propagación de una enfermedad infecciosa en la población actual. Describe si la epidemia tendería a crecer, disminuir o mantenerse estable, y qué consideraciones de salud pública son relevantes con este Re. Mantén la explicación concisa pero informativa, en español. Usa Markdown para dar formato si es necesario (ej. **negrita**).`;
+            callGeminiAPI(prompt,
+                document.getElementById('explainReButton'),
+                document.getElementById('reLlmOutputLoading'),
+                document.getElementById('reLlmOutput')
+            );
+        }
+        
+        async function generateDiseaseSummary() {
+            const diseaseName = document.getElementById('diseaseNameInput').value;
+            if (!diseaseName.trim()) {
+                alert("Por favor, introduce un nombre de enfermedad.");
+                return;
+            }
+            const prompt = `Proporciona un resumen conciso de los parámetros epidemiológicos clave para la enfermedad '${diseaseName}' en español. Incluye: rango típico de R0, periodo de incubación promedio, periodo de infecciosidad promedio, y principales modos de transmisión. Si es una enfermedad transmitida por vectores, menciona el vector principal. Presenta la información de forma clara y estructurada usando Markdown (ej. **Parámetro:** Valor).`;
+            callGeminiAPI(prompt,
+                document.getElementById('generateSummaryButton'),
+                document.getElementById('diseaseSummaryLoading'),
+                document.getElementById('diseaseSummaryOutput')
+            );
+        }
+
+
+        window.onload = function() {
+            updateR0(); 
+            const firstTabButton = document.querySelector('.tabs .tab-button');
+            if (firstTabButton) { 
+                 firstTabButton.classList.add('active'); 
+            }
+            const tabContents = document.getElementsByClassName("tab-content");
+            if (tabContents.length > 0) {
+                 for (let i = 0; i < tabContents.length; i++) { 
+                     tabContents[i].style.display = "none";
+                     tabContents[i].classList.remove("active");
+                 }
+                 tabContents[0].style.display = "block"; 
+                 tabContents[0].classList.add("active");
+            }
+        };
+    </script>
+</body>
+</html>
